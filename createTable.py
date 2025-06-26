@@ -17,6 +17,7 @@ CREATE_TABLE_SQL = f"""
 CREATE SCHEMA IF NOT EXISTS {db_schema};
 
 CREATE TABLE IF NOT EXISTS {db_schema}.{table_name} (
+    image_type TEXT,
     id SERIAL PRIMARY KEY,
     subject_id TEXT,
     session_number TEXT,
@@ -105,13 +106,26 @@ def load_json(file_path):
     with open(file_path, "r") as f:
         return json.load(f)
 
+# Detects image type from file
+def detect_image_type(filename):
+    fname = filename.lower()
+    if "t1w" in fname:
+        return "T1"
+    elif "t2w" in fname:
+        return "T2"
+    elif "bold" in fname:
+        return "fMRI"
+    elif "dwi" in fname or "dti" in fname:
+        return "dMRI"
+    else:
+        return "Unknown"
+
 # Extracts metadata from matching HTML file 
 def extract_metadata_from_html(html_file):
     with open(html_file, "r") as f:
         soup = BeautifulSoup(f, "html.parser")
     text = soup.get_text()
 
-    # Extract fields from summary section
     lines = text.splitlines()
     summary_lines = [line.strip() for line in lines if "BIDS filename:" in line or "Date and time:" in line]
 
@@ -121,28 +135,30 @@ def extract_metadata_from_html(html_file):
     filename = filename_line.replace("BIDS filename:", "").strip().rstrip(".")
     scan_date = date_line.replace("Date and time:", "").strip().split(",")[0]
 
-    subject_id = None
-    session_number = None
+    subject_id = session_number = None
     parts = filename.split("_")
     for p in parts:
         if p.startswith("sub-"):
             subject_id = p.replace("sub-", "")
-        if p.startswith("ses-"):
+        elif p.startswith("ses-"):
             session_number = p.replace("ses-", "")
+
+    image_type = detect_image_type(filename)
 
     return {
         "subject_id": subject_id,
         "session_number": session_number,
         "scan_date": scan_date,
-        "filename": filename
+        "filename": filename,
+        "image_type": image_type
     }
 
 # Inserts all data into DB table 
 def insert_data(conn, data, metadata):
     provenance_md5 = data.get("provenance", {}).get("md5sum")
 
-    keys = ["subject_id", "session_number", "scan_date", "filename"]
-    values = [metadata["subject_id"], metadata["session_number"], metadata["scan_date"], metadata["filename"]]
+    keys = ["subject_id", "session_number", "scan_date", "filename", "image_type"]
+    values = [metadata["subject_id"], metadata["session_number"], metadata["scan_date"], metadata["filename"], metadata["image_type"]]
 
     for k, v in data.items():
         if k in ["provenance", "bids_meta"]:
