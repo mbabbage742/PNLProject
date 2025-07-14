@@ -4,11 +4,11 @@ import psycopg2
 from bs4 import BeautifulSoup
 
 # DB connection parameters
-db_user = "user id here"
-db_password = "password here"
-db_host = "dna007.partners.org"
-db_port = 58999
-db_name = "mri_db"
+db_user = "pipeline"
+db_password = "piedpiper"
+db_host = "pnl-postgres-1.partners.org"
+db_port = 5432
+db_name = "ampscz_db"
 db_schema = "mri_qc"
 table_name = "mriqc_results"
 
@@ -218,6 +218,6 @@ def main(json_dir):
         conn.close()
 
 if __name__ == "__main__":
-    json_dir = "file directory here"  
+    json_dir = "/data/pnl/home/gb1009/testdata/MRIQC/sub-YA57741/ses-202404091"  
     main(json_dir)
 
