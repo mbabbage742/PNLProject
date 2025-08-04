@@ -2,7 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 
 # Connect to Postgres
-engine = create_engine('postgresql+psycopg2://gb1009:GrcnPyM7W5K!2$@pnl-x90-2-postgres-kcho.partners.org/enigma_chr')
+engine = create_engine('postgresql+psycopg2://gb1009:*@pnl-x90-2-postgres-kcho.partners.org/enigma_chr')
 
 with engine.connect() as conn:
     # Drop & recreate tables with correct types & constraints
